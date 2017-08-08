@@ -134,7 +134,7 @@ when 'powershell'
 when 'cmd'
   shell = winrm.shell(:cmd, shell_opts)
 when 'wql'
-  result = winrm.wql(command)
+  result = winrm.run_wql(command)
 end
 
 output = shell.run(command) do |stdout, stderr|
