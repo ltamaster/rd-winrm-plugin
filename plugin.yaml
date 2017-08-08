@@ -2,8 +2,8 @@ name: "rd-winrm-plugin"
 rundeckPluginVersion: 1.2
 author: "© 2017, Rundeck, Inc."
 date: "Fri Feb 03 22:29:35 UTC 2017"
-version: "1.5.2"
-url: "http://rundeck.com"
+version: "1.7.0"
+url: "https://github.com/NetDocuments/rd-winrm-plugin"
 providers:
   - name: WinRMexe
     title: WinRM Executor

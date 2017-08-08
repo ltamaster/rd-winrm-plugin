@@ -3,7 +3,7 @@ This is a [Rundeck Node Execution plugin][1] that uses WinRM to connect to Windo
 [1]: http://rundeck.org/docs/plugins-user-guide/node-execution-plugins
 [2]: https://github.com/WinRb/WinRM
 
-Compatible with Rundeck 2.3.x+
+Compatible with Rundeck 2.9.x+
 
 ## Features
 Can run scripts, not only commands  
@@ -18,16 +18,16 @@ Ubuntu: `apt-get install make ruby ruby-dev`
 CentOS/RHEL: `yum install make ruby ruby-devel`
 
 Install following gems:  
-`gem install winrm -v 1.8.1`  
-`gem install winrm-fs -v 0.4.3`  
+`gem install winrm -v 2.2.3`  
+`gem install winrm-fs -v 1.0.1`  
 
 Download from the [releases page](https://github.com/NetDocuments/rd-winrm-plugin/releases).
 
 Copy the `rd-winrm-plugin.zip` to the `libext/` directory for Rundeck. It must be named like `rd-winrm-plugin-x.x.x.zip`. There is no need to restart rundeck.
 
 ```bash
-RD_WINRM='1.5.1'
-curl https://github.com/NetDocuments/rd-winrm-plugin/archive/$RD_WINRM.zip -o /var/lib/rundeck/libext/rd-winrm-plugin-$RD_WINRM.zip
+RD_WINRM='1.7.0'
+curl https://github.com/ltamaster/rd-winrm-plugin/archive/$RD_WINRM.zip -o /var/lib/rundeck/libext/rd-winrm-plugin-$RD_WINRM.zip
 ```
 
 Before rundeck can run commands on windows nodes, [configure winrm](https://technet.microsoft.com/en-us/magazine/ff700227.aspx) from an administrative powershell window
@@ -41,13 +41,11 @@ and `WinRM File Copier` as Default Node File Copier
 
 Settings:  
 `Kerberos Realm`  Put here fqdn of your realm in case your computer is part of AD domain  
-`Username` (Removed, it will taken at node label) Put here username for negotiate, plaintext or ssl auth  
-`Password` (Removed, it will taken at node label or using Password Storage)Put here password for negotiate, plaintext or ssl auth  
+`Password Storage Path` Put here password (from Key Storage) for negotiate, plaintext or ssl auth. It could be overwriten on node level using ssh-password-storage-path node attribute
 `Auth type` choose here negotiate, kerberos, plaintext or ssl  
 `WinRM port` set port for winrm (Default: 5985/5986 for http/https)  
 `Shell` choose here powershell, cmd or wql  
 `WinRM timeout` put here time in seconds (useful for long running commands)  
-`Password Storage` Put the password using the Key Storage
 
 ![](http://cl.ly/1S1D2C070Z1T/Screenshot%202016-01-05%2016.51.53.png)
 

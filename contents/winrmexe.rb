@@ -1,5 +1,5 @@
 #!/usr/bin/ruby
-gem 'winrm', '= 1.8.1'
+gem 'winrm', '= 2.2.3'
 require 'winrm'
 auth = ENV['RD_CONFIG_AUTHTYPE']
 user = ENV['RD_NODE_USERNAME'] #take the username from node
@@ -66,7 +66,8 @@ if ENV['RD_JOB_LOGLEVEL'] == 'DEBUG'
   puts "endpoint => #{endpoint}"
   puts "user => #{user}"
   puts "no_ssl_peer_verification => #{no_ssl_peer_verification}"
-  puts 'pass => ********'
+  puts 'pass => *******'
+  puts "auth => #{auth}"
   # puts "pass => #{pass}" # uncomment it for full auth debugging
   puts "command => #{ENV['RD_EXEC_COMMAND']}"
   puts "newcommand => #{command}"
@@ -93,55 +94,57 @@ def stderr_text(stderr)
   end
 end
 
+connections_opts = {
+   endpoint: endpoint
+}
+
+connections_opts[:operation_timeout] = ENV['RD_CONFIG_WINRMTIMEOUT'].to_i if ENV['RD_CONFIG_WINRMTIMEOUT']
+
 case auth
 when 'negotiate'
-  winrm = WinRM::WinRMWebService.new(endpoint, :negotiate, user: user, pass: pass)
+ connections_opts[:transport] = :negotiate
+ connections_opts[:user] = user
+ connections_opts[:password] = pass
 when 'kerberos'
-  winrm = WinRM::WinRMWebService.new(endpoint, :kerberos, realm: realm)
+ connections_opts[:transport] = :kerberos
+ connections_opts[:realm] = realm
 when 'plaintext'
-  winrm = WinRM::WinRMWebService.new(endpoint, :plaintext, user: user, pass: pass, disable_sspi: true)
+ connections_opts[:transport] = :plaintext
+ connections_opts[:user] = user
+ connections_opts[:password] = pass
+ connections_opts[:disable_sspi] = true
 when 'ssl'
-  winrm = WinRM::WinRMWebService.new(endpoint, :ssl, user: user, pass: pass, disable_sspi: true, :no_ssl_peer_verification => no_ssl_peer_verification)
+ connections_opts[:transport] = :ssl
+ connections_opts[:user] = user
+ connections_opts[:password] = pass
+ connections_opts[:disable_sspi] = true
 else
   fail "Invalid authtype '#{auth}' specified, expected: kerberos, plaintext, ssl."
 end
 
-winrm.set_timeout(ENV['RD_CONFIG_WINRMTIMEOUT'].to_i) if ENV['RD_CONFIG_WINRMTIMEOUT']
+winrm = WinRM::Connection.new(connections_opts)
+
+shell_opts = {
+  #TODO: pass the RD_* environment to the remote node
+}
 
 case shell
 when 'powershell'
-  result = winrm.create_executor().run_powershell_script(command)
+  shell = winrm.shell(:powershell, shell_opts)
 when 'cmd'
-  result = winrm.create_executor().run_cmd(command)
+  shell = winrm.shell(:cmd, shell_opts)
 when 'wql'
   result = winrm.wql(command)
 end
 
-result[:data].each do |output_line|
-  eoutput = "#{eoutput}#{output_line[:stderr]}" if output_line.key?(:stderr)
-  ooutput = "#{ooutput}#{output_line[:stdout]}" if output_line.key?(:stdout)
+output = shell.run(command) do |stdout, stderr|
+    eoutput = "#{eoutput}#{stderr}"
+    ooutput = "#{ooutput}#{stdout}"
 end
+
 
 STDERR.print stderr_text(eoutput) if eoutput != ''
 STDOUT.print ooutput
-exit result[:exitcode] if result[:exitcode] != 0
 
-# winrm.powershell(command) do |stdout, stderr|
-#   STDOUT.print stdout
-#   STDERR.print stderr
-# end
+exit output.exitcode if output.exitcode !=0
 
-# result = winrm.cmd(command)
-# if result[:exitcode] != 0
-#    result[:data].each do |output_line|
-#          if output_line.has_key?(:stderr)
-#                  STDOUT.print output_line[:stderr]
-#                      end
-#            end
-# else
-#    result[:data].each do |output_line|
-#          if output_line.has_key?(:stdout)
-#                  STDOUT.print output_line[:stdout]
-#                      end
-#            end
-# end
