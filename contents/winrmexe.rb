@@ -14,11 +14,12 @@ host = ENV['RD_OPTION_WINRMHOST'] if ENV['RD_OPTION_WINRMHOST'] && (override == 
 user = ENV['RD_OPTION_WINRMUSER'].dup if ENV['RD_OPTION_WINRMUSER'] && (override == 'user' || override == 'all')
 pass = ENV['RD_OPTION_WINRMPASS'].dup if ENV['RD_OPTION_WINRMPASS'] && (override == 'user' || override == 'all')
 no_ssl_peer_verification=ENV['RD_CONFIG_NOSSLPV']
+transport = ENV['RD_CONFIG_WINRMTRANSPORT']
 
 if auth == 'ssl'
   endpoint = "https://#{host}:#{port}/wsman"
 else
-  endpoint = "http://#{host}:#{port}/wsman"
+  endpoint = "#{transport}://#{host}:#{port}/wsman"
 end
 ooutput = ''
 eoutput = ''
@@ -105,6 +106,7 @@ when 'negotiate'
  connections_opts[:transport] = :negotiate
  connections_opts[:user] = user
  connections_opts[:password] = pass
+ connections_opts[:no_ssl_peer_verification] = no_ssl_peer_verification
 when 'kerberos'
  connections_opts[:transport] = :kerberos
  connections_opts[:realm] = realm
@@ -118,6 +120,7 @@ when 'ssl'
  connections_opts[:user] = user
  connections_opts[:password] = pass
  connections_opts[:disable_sspi] = true
+ connections_opts[:no_ssl_peer_verification] = no_ssl_peer_verification
 else
   fail "Invalid authtype '#{auth}' specified, expected: kerberos, plaintext, ssl."
 end
