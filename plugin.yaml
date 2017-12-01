@@ -1,62 +1,80 @@
-name: "rd-winrm-plugin"
+name: rd-winrm-plugin
+version: 1.7.0
 rundeckPluginVersion: 1.2
-author: "© 2017, Rundeck, Inc."
-date: "Fri Feb 03 22:29:35 UTC 2017"
-version: "1.7.0"
-url: "https://github.com/NetDocuments/rd-winrm-plugin"
+author: Volodymyr Babchynskyy
+date: 26.10.2015
 providers:
   - name: WinRMexe
     title: WinRM Executor
-    description: Executing Scripts or commands on remote windows computer
+    description: Executing Scripts or Commands on remote Windows computer
     service: NodeExecutor
     plugin-type: script
     script-interpreter: ruby
     script-file: winrmexe.rb
-#    script-args: ${config.realm} ${config.username} ${config.password} ${node.hostname} ${exec.command}
-    interpreter-args-quoted: true
     config:
       - name: krb5_realm
         title: Kerberos Realm
         type: String
         required: false
-        description: "Kerberos Realm FQDN in capital letters.Can be overridden by a Node attribute named 'krb5_realm'."
+        description: "Kerberos Realm FQDN in capital letters"
         scope: Instance
         renderingOptions:
-          instance-scope-node-attribute: "krb5_realm"
-      - name: passwordStoragePath
-        title: Password Storage Path
+          groupName: Authentication
+          instance-scope-node-attribute: "rd-winrm-krb5_realm"
+      - name: user
+        title: Username
+        description: "Username in DOMAIN\\name format"
         type: String
         required: false
-        description: "Path to the Password to use within Rundeck Storage. E.g. keys/path/my.password. Can be overridden by a Node attribute named 'ssh-password-storage-path'."
         scope: Instance
         renderingOptions:
-          selectionAccessor: "STORAGE_PATH"
-          valueConversion: "STORAGE_PATH_AUTOMATIC_READ"
-          storage-path-root: "keys"
-          storage-file-meta-filter: "Rundeck-data-type=password"
-          instance-scope-node-attribute: "password-storage-path"
+          groupName: Authentication
+          instance-scope-node-attribute: "rd-winrm-user"
+      - name: pass
+        title: Password
+        description: "Password"
+        type: String
+        required: false
+        scope: Instance
+        renderingOptions:
+          displayType: PASSWORD
+          groupName: Authentication
+          instance-scope-node-attribute: "rd-winrm-password"
       - name: authtype
-        title: Auth type
-        description: "Authentication type.Can be overridden by a Node attribute named 'authtype'."
+        title: Authentication Type
+        description: "Authentication Type"
         type: Select
         values: "negotiate, ssl, kerberos, plaintext"
         default: "plaintext"
         required: true
         scope: Instance
         renderingOptions:
-          instance-scope-node-attribute: "authtype"
+          groupName: Authentication
+          instance-scope-node-attribute: "rd-winrm-authtype"
+      - name: nossl
+        title: No SSL Verification
+        description: "When set to true ssl certificate validation is not performed"
+        type: Select
+        values: "true, false"
+        default: "false"
+        required: true
+        scope: Instance
+        renderingOptions:
+          groupName: Connection
+          instance-scope-node-attribute: "rd-winrm-nossl"
       - name: allowoverride
         title: Allow Override
-        description: "Gives possibility to override hostname, username (and password) in job options.Can be overridden by a Node attribute named 'allowoverride'."
+        description: "Gives possibility to override hostname, username (and password) in job options"
         type: Select
         values: "none, host, user, all"
         default: "none"
         required: true
         scope: Instance
         renderingOptions:
-          instance-scope-node-attribute: "allowoverride"
+          groupName: Connection
+          instance-scope-node-attribute: "rd-winrm-allowoverride"
       - name: winrmtransport
-        title: WinRM transport protocol
+        title: WinRM Transport Protocol
         description: "WinRM transport protocol (Default: http or https when ssl is selected for Authentication type)"
         type: Select
         default: "http"
@@ -64,43 +82,41 @@ providers:
         required: true
         scope: Instance
         renderingOptions:
-          instance-scope-node-attribute: "winrmtransport"
+          groupName: Connection
+          instance-scope-node-attribute: "rd-winrm-transport"
       - name: winrmport
-        title: WinRM port
-        description: "WinRM port (Default: 5985/5986 for http/https).Can be overridden by a Node attribute named 'winrmport'."
+        title: WinRM Port
+        description: "WinRM port (Default: 5985/5986 for http/https)"
         type: String
         default: "5985"
         required: true
         scope: Instance
         renderingOptions:
-          instance-scope-node-attribute: "winrmport"
+          groupName: Connection
+          instance-scope-node-attribute: "rd-winrm-port"
       - name: shell
         title: Shell
-        description: "Windows interpreter.Can be overridden by a Node attribute named 'shell'."
+        description: "Windows Shell interpreter"
         type: Select
         values: "cmd, powershell, wql"
         default: 'powershell'
         required: true
         scope: Instance
         renderingOptions:
-          instance-scope-node-attribute: "shell"
+          groupName: Connection
+          instance-scope-node-attribute: "rd-winrm-shell"
       - name: winrmtimeout
-        title: WinRM timeout
-        description: "timeout in seconds default: 60. Can be overridden by a Node attribute named 'winrmtimeout'."
+        title: WinRM Timeout
+        description: "Timeout in seconds default: 60"
         type: Integer
         required: false
         scope: Instance
         renderingOptions:
-          instance-scope-node-attribute: "winrmtimeout"
-      - name: nosslpv
-        title: No SSL Peer Verification
-        type: Boolean
-        description: "Enable/Disable the ssl peer verificacion ( eg: no_ssl_peer_verification => true). Can be overridden by a Node attribute named 'no-ssl-peer-verification'."
-        scope: Instance
-        renderingOptions:
-          instance-scope-node-attribute: "no-ssl-peer-verification"          
+          groupName: Connection
+          instance-scope-node-attribute: "rd-winrm-timeout"
   - name: WinRMcp
     title: WinRM File Copier
+    description: Copying files to remote Windows computer
     service: FileCopier
     plugin-type: script
     script-interpreter: ruby
@@ -111,44 +127,65 @@ providers:
         title: Kerberos Realm
         type: String
         required: false
-        description: "Kerberos Realm FQDN in capital letters.Can be overridden by a Node attribute named 'krb5_realm'."
+        description: "Kerberos Realm FQDN in capital letters"
         scope: Instance
         renderingOptions:
-          instance-scope-node-attribute: "krb5_realm"
-      - name: passwordStoragePath
-        title: Password Storage Path
+          groupName: Authentication
+          instance-scope-node-attribute: "rd-winrm-krb5_realm"
+      - name: user
+        title: Username
+        description: "Username in DOMAIN\\name format"
         type: String
         required: false
-        description: "Path to the Password to use within Rundeck Storage. E.g. keys/path/my.password. Can be overridden by a Node attribute named 'ssh-password-storage-path'."
         scope: Instance
         renderingOptions:
-          selectionAccessor: "STORAGE_PATH"
-          valueConversion: "STORAGE_PATH_AUTOMATIC_READ"
-          storage-path-root: "keys"
-          storage-file-meta-filter: "Rundeck-data-type=password"
-          instance-scope-node-attribute: "password-storage-path"
+          groupName: Authentication
+          instance-scope-node-attribute: "rd-winrm-user"
+      - name: pass
+        title: Password
+        description: "Password"
+        type: String
+        required: false
+        scope: Instance
+        renderingOptions:
+          displayType: PASSWORD
+          groupName: Authentication
+          instance-scope-node-attribute: "rd-winrm-password"
       - name: authtype
-        title: Auth type
-        description: "Authentication type.Can be overridden by a Node attribute named 'authtype'."
+        title: Authentication Type
+        description: "Authentication Type"
         type: Select
         values: "negotiate, ssl, kerberos, plaintext"
         default: "plaintext"
         required: true
         scope: Instance
         renderingOptions:
-          instance-scope-node-attribute: "authtype"
+          groupName: Authentication
+          instance-scope-node-attribute: "rd-winrm-authtype"
+      - name: nossl
+        title: No SSL Verification
+        description: "When set to true ssl certificate validation is not performed"
+        type: Select
+        values: "true, false"
+        default: "false"
+        required: true
+        scope: Instance
+        renderingOptions:
+          groupName: Connection
+          instance-scope-node-attribute: "rd-winrm-nossl"
       - name: allowoverride
         title: Allow Override
-        description: "Gives possibility to override hostname, username (and password) in job options.Can be overridden by a Node attribute named 'allowoverride'."
+        description: "Gives possibility to override hostname, username (and password) in job options"
         type: Select
         values: "none, host, user, all"
         default: "none"
         required: true
         scope: Instance
         renderingOptions:
-          instance-scope-node-attribute: "allowoverride"
+          groupName: Connection
+          instance-scope-node-attribute: "rd-winrm-allowoverride"
       - name: winrmtransport
-        title: WinRM transport protocol
+        title: WinRM Transport Protocol
         description: "WinRM transport protocol (Default: http or https when ssl is selected for Authentication type)"
         type: Select
         default: "http"
@@ -156,38 +193,35 @@ providers:
         required: true
         scope: Instance
         renderingOptions:
-          instance-scope-node-attribute: "winrmtransport"    
+          groupName: Connection
+          instance-scope-node-attribute: "rd-winrm-transport"
       - name: winrmport
-        title: WinRM port
-        description: "WinRM port (Default: 5985/5986 for http/https).Can be overridden by a Node attribute named 'winrmport'."
+        title: WinRM Port
+        description: "WinRM port (Default: 5985/5986 for http/https)"
         type: String
         default: "5985"
         required: true
         scope: Instance
         renderingOptions:
-          instance-scope-node-attribute: "winrmport"
+          groupName: Connection
+          instance-scope-node-attribute: "rd-winrm-port"
       - name: shell
         title: Shell
-        description: "Windows interpreter. Should be same as in Executor.Can be overridden by a Node attribute named 'shell'."
+        description: "Windows Shell interpreter"
         type: Select
         values: "cmd, powershell, wql"
         default: 'powershell'
         required: true
         scope: Instance
         renderingOptions:
-          instance-scope-node-attribute: "shell"
+          groupName: Connection
+          instance-scope-node-attribute: "rd-winrm-shell"
       - name: winrmtimeout
-        title: WinRM timeout
-        description: "timeout in seconds default: 60. Can be overridden by a Node attribute named 'winrmtimeout'."
+        title: WinRM Timeout
+        description: "Timeout in seconds default: 60"
         type: Integer
         required: false
         scope: Instance
         renderingOptions:
-          instance-scope-node-attribute: "winrmtimeout"
-      - name: nosslpv
-        title: No SSL Peer Verification
-        type: Boolean
-        description: "Enable/Disable the ssl peer verificacion ( eg: no_ssl_peer_verification => true). Can be overridden by a Node attribute named 'no-ssl-peer-verification'."
-        scope: Instance
-        renderingOptions:
-          instance-scope-node-attribute: "no-ssl-peer-verification" 
+          groupName: Connection
+          instance-scope-node-attribute: "rd-winrm-timeout"
